@@ -1,0 +1,31 @@
+.family-explorer {
+  display: flex;
+  flex-direction: column;
+  margin: 24px;
+  overflow: hidden;
+}
+
+.explorer-header {
+  padding: 16px 20px;
+  background: var(--bg-primary);
+}
+
+.explorer-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.explorer-content {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+}
+
+.explorer-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+}

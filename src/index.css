@@ -1,0 +1,7 @@
+@import './App.css';
+
+/* Remove default vite styles */
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}

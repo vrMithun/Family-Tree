@@ -1,0 +1,113 @@
+.folder-node-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.folder-node-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.folder-node-row:hover {
+  background-color: var(--bg-hover);
+}
+
+.folder-icon-area {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  margin-right: 8px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.folder-icon-area:hover {
+  background-color: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.folder-icon {
+  color: #797775;
+}
+
+.folder-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.folder-name {
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.folder-actions {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.folder-node-row:hover .folder-actions,
+.folder-actions:focus-within {
+  opacity: 1;
+}
+
+.folder-children {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-left: 20px;
+  border-left: 1px solid var(--border-color);
+  transition: border-color 0.15s;
+}
+
+.folder-node-wrapper:hover > .folder-children {
+  border-left-color: var(--accent-color);
+}
+
+.add-line-btn {
+  position: absolute;
+  left: -9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  background: var(--bg-card);
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+  z-index: 10;
+}
+
+.folder-children:hover > .add-line-btn {
+  opacity: 1;
+}
+
+.add-line-btn:hover {
+  background: var(--accent-color);
+  color: white;
+}
+
+.folder-node-row[draggable="true"] {
+  /* No special grab cursor unless hovering the row */
+}
+
+.folder-node-row.drag-over {
+  background-color: var(--bg-hover);
+  outline: 2px dashed var(--accent-color);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
