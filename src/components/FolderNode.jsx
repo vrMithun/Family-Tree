@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus, User } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, Heart, Plus, User, Trash2 } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
 import { getFamilyMembers } from '../utils/relationshipUtils';
 import { useModals } from './modals/ModalProvider';
@@ -149,6 +149,21 @@ export function FolderNode({ node, level = 0 }) {
                   {member.name} {member.isAlive === false && '(Deceased)'}
                 </span>
                 <span className="badge" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}>Member</span>
+              </div>
+              
+              <div 
+                className="folder-actions" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
+                    dispatch({ type: 'DELETE_PERSON', payload: { id: member.id } });
+                  }
+                }}
+                style={{ opacity: 1, paddingRight: '8px' }}
+              >
+                <div title="Delete Member" style={{ color: '#d13438', cursor: 'pointer', padding: '4px' }}>
+                  <Trash2 size={14} />
+                </div>
               </div>
             </div>
           ))}
