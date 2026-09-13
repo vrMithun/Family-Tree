@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, Heart, Plus, User } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
+import { getFamilyMembers } from '../utils/relationshipUtils';
 import { useModals } from './modals/ModalProvider';
 import { useFamily } from '../store/FamilyStore';
 import './FolderNode.css';
@@ -10,17 +11,19 @@ export function FolderNode({ node, level = 0 }) {
   const [expanded, setExpanded] = useState(level < 2); // default expand first few levels
   const navigate = useNavigate();
   const [isDragOver, setIsDragOver] = useState(false);
-  const { dispatch } = useFamily();
+  const { state, dispatch } = useFamily();
   const { openModal } = useModals();
 
   if (!node) return null;
 
+  const members = getFamilyMembers(state, node.familyId);
   const hasChildren = node.childrenNodes && node.childrenNodes.length > 0;
+  const hasContent = hasChildren || members.length > 0;
 
   const handleToggle = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (hasChildren) {
+    if (hasContent) {
       setExpanded(!expanded);
     }
   };
@@ -78,7 +81,7 @@ export function FolderNode({ node, level = 0 }) {
         onDrop={handleDrop}
       >
         <div className="folder-icon-area" onClick={handleToggle}>
-          {hasChildren ? (
+          {hasContent ? (
             expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
           ) : (
             <span style={{ width: 16, display: 'inline-block' }} />
@@ -115,7 +118,7 @@ export function FolderNode({ node, level = 0 }) {
         </div>
       </div>
       
-      {expanded && hasChildren && (
+      {expanded && hasContent && (
         <div className={`folder-children level-${level}`}>
           <div 
             className="add-line-btn" 
@@ -127,7 +130,31 @@ export function FolderNode({ node, level = 0 }) {
           >
             <Plus size={12} strokeWidth={3} />
           </div>
-          {node.childrenNodes.map((childNode, index) => (
+          
+          {/* Render Members (Parents) */}
+          {members.map(member => (
+            <div 
+              key={member.id} 
+              className="folder-node-row member-row" 
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/person/${member.id}/tree`);
+              }}
+            >
+              <div className="folder-icon-area" style={{ marginLeft: '16px', color: member.gender === 'F' ? '#d13438' : '#0078d4' }}>
+                <User size={16} />
+              </div>
+              <div className="folder-content">
+                <span className="folder-name" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  {member.name} {member.isAlive === false && '(Deceased)'}
+                </span>
+                <span className="badge" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}>Member</span>
+              </div>
+            </div>
+          ))}
+
+          {/* Render Children Families */}
+          {node.childrenNodes && node.childrenNodes.map((childNode, index) => (
             <FolderNode key={`${childNode.familyId}-${index}`} node={childNode} level={level + 1} />
           ))}
         </div>
