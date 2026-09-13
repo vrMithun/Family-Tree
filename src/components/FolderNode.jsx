@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus } from 'lucide-react';
-import { ContextMenu } from './ContextMenu';
+import { ChevronRight, ChevronDown, Folder, Heart, Plus, Trash2 } from 'lucide-react';
 import { useModals } from './modals/ModalProvider';
 import { useFamily } from '../store/FamilyStore';
 import './FolderNode.css';
@@ -111,7 +110,19 @@ export function FolderNode({ node, level = 0 }) {
         </div>
         
         <div className="folder-actions" onClick={e => e.stopPropagation()}>
-          <ContextMenu familyId={node.familyId} />
+          <div 
+            className="delete-btn action-btn danger" 
+            title="Delete Family Branch"
+            onClick={(e) => {
+              e.stopPropagation();
+              e.preventDefault();
+              if (window.confirm('Are you sure you want to delete this entire family branch? This action cannot be undone.')) {
+                dispatch({ type: 'DELETE_FAMILY', payload: { id: node.familyId } });
+              }
+            }}
+          >
+            <Trash2 size={16} />
+          </div>
         </div>
       </div>
       
