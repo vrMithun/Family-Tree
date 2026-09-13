@@ -17,14 +17,14 @@ export function Sidebar() {
     if (name) {
       dispatch({ type: 'CREATE_PROJECT', payload: { name } });
       setShowProjects(false);
-      navigate('/');
+      navigate('/tree');
     }
   };
 
   const handleSwitchProject = (projectId) => {
     dispatch({ type: 'SWITCH_PROJECT', payload: { projectId } });
     setShowProjects(false);
-    navigate('/');
+    navigate('/tree');
   };
 
   return (
@@ -77,8 +77,13 @@ export function Sidebar() {
       </div>
       
       <nav className="sidebar-nav">
-        <NavLink to="/" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
+        <NavLink to="/" className={({isActive}) => `sidebar-link ${isActive && window.location.pathname === '/' ? 'active' : ''}`} end>
           <Home size={18} />
+          <span>Dashboard</span>
+        </NavLink>
+        
+        <NavLink to="/tree" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <FolderTree size={18} />
           <span>Family Tree</span>
         </NavLink>
         
@@ -92,11 +97,7 @@ export function Sidebar() {
           <span>Search</span>
         </NavLink>
         
-        <NavLink to="/branches" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
-          <FolderTree size={18} />
-          <span>Branches</span>
-        </NavLink>
-        
+
         <NavLink to="/settings" className={({isActive}) => `sidebar-link ${isActive ? 'active' : ''}`}>
           <Settings size={18} />
           <span>Settings</span>

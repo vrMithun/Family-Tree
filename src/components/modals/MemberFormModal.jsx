@@ -14,6 +14,9 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
     deathDate: ''
   });
 
+  const [creationMode, setCreationMode] = useState('new');
+  const [selectedPersonId, setSelectedPersonId] = useState('');
+
   React.useEffect(() => {
     if (isOpen && mode === 'edit-person' && targetPersonId) {
       const person = state.people[targetPersonId];
@@ -28,8 +31,11 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
           deathDate: person.deathDate || ''
         });
       }
+      setCreationMode('new');
     } else if (isOpen) {
       setFormData({ name: '', birthDate: '', birthPlace: '', gender: 'M', notes: '', isAlive: true, deathDate: '' });
+      setCreationMode('new');
+      setSelectedPersonId('');
     }
   }, [isOpen, mode, targetPersonId, state.people]);
 
@@ -38,6 +44,10 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    const payloadBase = creationMode === 'existing' && selectedPersonId 
+      ? { existingPersonId: selectedPersonId } 
+      : { person: formData };
+
     if (mode === 'edit-person') {
       dispatch({
         type: 'EDIT_PERSON',
@@ -51,7 +61,7 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
         type: 'ADD_CHILD',
         payload: {
           parentFamilyId: targetFamilyId,
-          person: formData
+          ...payloadBase
         }
       });
     } else if (mode === 'add-sibling') {
@@ -59,7 +69,7 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
         type: 'ADD_SIBLING',
         payload: {
           siblingFamilyId: targetFamilyId,
-          person: formData
+          ...payloadBase
         }
       });
     } else if (mode === 'add-parent') {
@@ -67,7 +77,7 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
         type: 'ADD_PARENT',
         payload: {
           targetFamilyId,
-          person: formData
+          ...payloadBase
         }
       });
     } else if (mode === 'add-spouse') {
@@ -75,14 +85,14 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
         type: 'ADD_SPOUSE',
         payload: {
           personAId: targetPersonId,
-          newPerson: formData
+          ...(creationMode === 'existing' && selectedPersonId ? { existingPersonId: selectedPersonId } : { newPerson: formData })
         }
       });
     } else if (mode === 'add-root') {
       dispatch({
         type: 'ADD_ROOT',
         payload: {
-          person: formData
+          ...payloadBase
         }
       });
     }
@@ -100,20 +110,62 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
     return 'Add Member';
   };
 
+  const allPeople = Object.values(state.people || {}).filter(p => !p.isProxy).sort((a, b) => a.name.localeCompare(b.name));
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={getTitle()}>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            className="form-control" 
-            value={formData.name} 
-            onChange={e => setFormData({...formData, name: e.target.value})}
-            required
-            autoFocus
-          />
-        </div>
+        {mode !== 'edit-person' && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+            <button 
+              type="button" 
+              className={`btn ${creationMode === 'new' ? 'btn-primary' : ''}`}
+              onClick={() => setCreationMode('new')}
+              style={{ flex: 1 }}
+            >
+              Create New
+            </button>
+            <button 
+              type="button" 
+              className={`btn ${creationMode === 'existing' ? 'btn-primary' : ''}`}
+              onClick={() => setCreationMode('existing')}
+              style={{ flex: 1 }}
+            >
+              Select Existing
+            </button>
+          </div>
+        )}
+
+        {creationMode === 'existing' && mode !== 'edit-person' ? (
+          <div className="form-group">
+            <label>Select Member from Database</label>
+            <select 
+              className="form-control"
+              value={selectedPersonId}
+              onChange={e => setSelectedPersonId(e.target.value)}
+              required
+            >
+              <option value="">-- Select a member --</option>
+              {allPeople.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name} {p.birthDate ? `(${p.birthDate})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <>
+            <div className="form-group">
+              <label>Full Name</label>
+              <input 
+                type="text" 
+                className="form-control" 
+                value={formData.name} 
+                onChange={e => setFormData({...formData, name: e.target.value})}
+                required
+                autoFocus
+              />
+            </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div className="form-group">
             <label>Gender</label>
@@ -182,6 +234,8 @@ export function MemberFormModal({ isOpen, onClose, mode, targetFamilyId, targetP
             rows={3}
           />
         </div>
+        </>
+        )}
         
         <div className="modal-footer" style={{ display: 'flex', justifyContent: mode === 'edit-person' ? 'space-between' : 'flex-end' }}>
           {mode === 'edit-person' && (

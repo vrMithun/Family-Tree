@@ -18,7 +18,7 @@ export function MembersList() {
   }, [location.search]);
 
   const members = useMemo(() => {
-    let allMembers = Object.values(state.people);
+    let allMembers = Object.values(state.people).filter(p => !p.isProxy);
     if (searchTerm) {
       allMembers = allMembers.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }

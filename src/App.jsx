@@ -9,6 +9,7 @@ import { MembersList } from './components/MembersList';
 import { CustomFamilyTree } from './components/CustomFamilyTree';
 import { PlaceholderView } from './components/PlaceholderView';
 import { ModalProvider } from './components/modals/ModalProvider';
+import { ProjectDashboard } from './components/ProjectDashboard';
 import './App.css';
 
 function AppLayout() {
@@ -19,7 +20,8 @@ function AppLayout() {
         <Breadcrumbs />
         <div className="content-scroll">
           <Routes>
-            <Route path="/" element={<FamilyExplorer />} />
+            <Route path="/" element={<ProjectDashboard />} />
+            <Route path="/tree" element={<FamilyExplorer />} />
             <Route path="/family/:id" element={<FamilyDetail />} />
             <Route path="/members" element={<MembersList />} />
             <Route path="/person/:id/tree" element={<CustomFamilyTree />} />

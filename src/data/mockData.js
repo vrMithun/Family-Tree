@@ -1,9 +1,32 @@
 export const emptyProjectTemplate = {
-  people: {},
   families: {},
   familyMemberships: [],
   parentChild: [],
   spouses: []
+};
+
+const defaultPeople = {
+  "p-ramasamy": { id: "p-ramasamy", name: "Ramasamy", birthDate: "1940", deathDate: "2020", gender: "M" },
+  "p-lakshmi": { id: "p-lakshmi", name: "Lakshmi", birthDate: "1945", deathDate: "2022", gender: "F" },
+  
+  "p-suresh": { id: "p-suresh", name: "Suresh Kumar", birthDate: "1965", deathDate: "", gender: "M" },
+  "p-meena": { id: "p-meena", name: "Meena", birthDate: "1968", deathDate: "", gender: "F" },
+  
+  "p-ramesh": { id: "p-ramesh", name: "Ramesh", birthDate: "1967", deathDate: "", gender: "M" },
+  "p-kala": { id: "p-kala", name: "Kala", birthDate: "1970", deathDate: "", gender: "F" },
+
+  "p-kumar": { id: "p-kumar", name: "Kumar", birthDate: "1972", deathDate: "", gender: "M" },
+  "p-devi": { id: "p-devi", name: "Devi", birthDate: "1975", deathDate: "", gender: "F" },
+  
+  "p-arun": { id: "p-arun", name: "Arun Kumar", birthDate: "1990", deathDate: "", gender: "M" },
+  "p-priya": { id: "p-priya", name: "Priya", birthDate: "1992", deathDate: "", gender: "F" },
+  
+  "p-ravi": { id: "p-ravi", name: "Ravi", birthDate: "1995", deathDate: "", gender: "M" },
+  
+  "p-karthik": { id: "p-karthik", name: "Karthik", birthDate: "2015", deathDate: "", gender: "M" },
+  "p-divya": { id: "p-divya", name: "Divya", birthDate: "2018", deathDate: "", gender: "F" },
+  
+  "p-aarav": { id: "p-aarav", name: "Aarav", birthDate: "2040", deathDate: "", gender: "M" },
 };
 
 const defaultData = {
@@ -12,29 +35,6 @@ const defaultData = {
     id: "tree-1",
     name: "Family Tree",
     rootFamilyId: "fam-1" // Ramasamy & Lakshmi
-  },
-  people: {
-    "p-ramasamy": { id: "p-ramasamy", name: "Ramasamy", birthDate: "1940", deathDate: "2020", gender: "M" },
-    "p-lakshmi": { id: "p-lakshmi", name: "Lakshmi", birthDate: "1945", deathDate: "2022", gender: "F" },
-    
-    "p-suresh": { id: "p-suresh", name: "Suresh Kumar", birthDate: "1965", deathDate: "", gender: "M" },
-    "p-meena": { id: "p-meena", name: "Meena", birthDate: "1968", deathDate: "", gender: "F" },
-    
-    "p-ramesh": { id: "p-ramesh", name: "Ramesh", birthDate: "1967", deathDate: "", gender: "M" },
-    "p-kala": { id: "p-kala", name: "Kala", birthDate: "1970", deathDate: "", gender: "F" },
-
-    "p-kumar": { id: "p-kumar", name: "Kumar", birthDate: "1972", deathDate: "", gender: "M" },
-    "p-devi": { id: "p-devi", name: "Devi", birthDate: "1975", deathDate: "", gender: "F" },
-    
-    "p-arun": { id: "p-arun", name: "Arun Kumar", birthDate: "1990", deathDate: "", gender: "M" },
-    "p-priya": { id: "p-priya", name: "Priya", birthDate: "1992", deathDate: "", gender: "F" },
-    
-    "p-ravi": { id: "p-ravi", name: "Ravi", birthDate: "1995", deathDate: "", gender: "M" },
-    
-    "p-karthik": { id: "p-karthik", name: "Karthik", birthDate: "2015", deathDate: "", gender: "M" },
-    "p-divya": { id: "p-divya", name: "Divya", birthDate: "2018", deathDate: "", gender: "F" },
-    
-    "p-aarav": { id: "p-aarav", name: "Aarav", birthDate: "2040", deathDate: "", gender: "M" },
   },
   families: {
     "fam-1": { id: "fam-1", displayName: "Ramasamy & Lakshmi" },
@@ -89,6 +89,7 @@ const defaultData = {
 
 export const initialData = {
   activeProjectId: "proj-1",
+  people: defaultPeople,
   projects: {
     "proj-1": {
       id: "proj-1",
