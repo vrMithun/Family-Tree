@@ -116,7 +116,7 @@ export function FolderNode({ node, level = 0 }) {
       </div>
       
       {expanded && hasChildren && (
-        <div className="folder-children">
+        <div className={`folder-children level-${level}`}>
           <div 
             className="add-line-btn" 
             title="Add Child"
