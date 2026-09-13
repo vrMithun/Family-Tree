@@ -1,6 +1,13 @@
 export function getFamilyMembers(data, familyId) {
   const memberships = data.familyMemberships.filter(m => m.familyId === familyId && m.role === 'parent');
-  return memberships.map(m => data.people[m.personId]).filter(Boolean);
+  // Deduplicate by personId to prevent showing same person twice
+  const seen = new Set();
+  const uniqueMemberships = memberships.filter(m => {
+    if (seen.has(m.personId)) return false;
+    seen.add(m.personId);
+    return true;
+  });
+  return uniqueMemberships.map(m => data.people[m.personId]).filter(Boolean);
 }
 
 export function getFamilyChildrenIds(data, familyId) {

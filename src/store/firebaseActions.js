@@ -145,8 +145,12 @@ export const handleFirebaseAction = async (state, action) => {
       
       const famId = (state.familyMemberships || []).find(m => m.personId === personAId && m.role === 'parent')?.familyId;
       if (famId) {
-        const membership = { id: uuidv4(), familyId: famId, personId: spouseId, role: 'parent', projectId };
-        ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
+        // Only add membership if spouse isn't already a member of this family
+        const alreadyMember = (state.familyMemberships || []).some(m => m.familyId === famId && m.personId === spouseId);
+        if (!alreadyMember) {
+          const membership = { id: uuidv4(), familyId: famId, personId: spouseId, role: 'parent', projectId };
+          ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
+        }
         
         const pA = state.people[personAId];
         const pB = existingPersonId ? state.people[spouseId] : newPerson;
