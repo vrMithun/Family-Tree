@@ -84,12 +84,13 @@ export function PersonCard({ person, generation, spouse, isClickable }) {
           Edit Details
         </button>
         <button 
-          className="btn-icon" 
+          className="btn btn-sm btn-danger" 
           title="Delete Member"
-          style={{ color: '#d13438' }}
+          style={{ backgroundColor: '#fee2e2', color: '#d13438', borderColor: '#fca5a5' }}
           onClick={handleDelete}
         >
-          <Trash2 size={16} />
+          <Trash2 size={14} style={{ marginRight: '4px', display: 'inline-block', verticalAlign: 'middle' }} />
+          Delete
         </button>
       </div>
     </div>
