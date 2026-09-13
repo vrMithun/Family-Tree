@@ -24,19 +24,19 @@ export const seedDatabase = async () => {
 
     // Seed Memberships
     (pd.familyMemberships || []).forEach(membership => {
-      const id = membership.id || uuidv4();
+      const id = membership.id || `${membership.familyId}_${membership.personId}_${membership.role}`;
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id, data: { ...membership, id, projectId } });
     });
 
     // Seed ParentChild
     (pd.parentChild || []).forEach(pc => {
-      const id = pc.id || uuidv4();
+      const id = pc.id || `${pc.parentFamilyId}_${pc.childId}`;
       ops.push({ type: 'set', collection: collections.PARENT_CHILD, id, data: { ...pc, id, projectId } });
     });
 
     // Seed Spouses
     (pd.spouses || []).forEach(spouse => {
-      const id = spouse.id || uuidv4();
+      const id = spouse.id || `${spouse.personAId}_${spouse.personBId}`;
       ops.push({ type: 'set', collection: collections.SPOUSES, id, data: { ...spouse, id, projectId } });
     });
   });

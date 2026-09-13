@@ -101,7 +101,7 @@ export const subscribeToProjectData = (projectId, callback) => {
   const unsubMemberships = onSnapshot(
     query(collection(db, collections.MEMBERSHIPS), where('projectId', '==', projectId)),
     (snapshot) => {
-      data.familyMemberships = snapshot.docs.map(doc => doc.data());
+      data.familyMemberships = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       notify();
     }
   );
@@ -109,7 +109,7 @@ export const subscribeToProjectData = (projectId, callback) => {
   const unsubParentChild = onSnapshot(
     query(collection(db, collections.PARENT_CHILD), where('projectId', '==', projectId)),
     (snapshot) => {
-      data.parentChild = snapshot.docs.map(doc => doc.data());
+      data.parentChild = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       notify();
     }
   );
@@ -117,7 +117,7 @@ export const subscribeToProjectData = (projectId, callback) => {
   const unsubSpouses = onSnapshot(
     query(collection(db, collections.SPOUSES), where('projectId', '==', projectId)),
     (snapshot) => {
-      data.spouses = snapshot.docs.map(doc => doc.data());
+      data.spouses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       notify();
     }
   );

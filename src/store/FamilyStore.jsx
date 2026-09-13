@@ -87,7 +87,7 @@ export function FamilyProvider({ children }) {
         setGlobalState(prev => ({ ...prev, activeProjectId: newActiveProjectId }));
       }
     } catch (error) {
-      console.error("Error dispatching action to Firebase:", error);
+      console.error("Error dispatching action to Firebase:", action.type, error);
     }
   };
 
