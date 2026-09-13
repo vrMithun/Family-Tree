@@ -31,6 +31,10 @@ export function ContextMenu({ familyId }) {
       openModal('add-sibling', { targetFamilyId: familyId });
     } else if (action === 'add-parent') {
       openModal('add-parent', { targetFamilyId: familyId });
+    } else if (action === 'delete') {
+      if (window.confirm('Are you sure you want to delete this entire family branch? This action cannot be undone.')) {
+        dispatch({ type: 'DELETE_FAMILY', payload: { id: familyId } });
+      }
     }
     // More actions can be added later (archive, move, add-spouse)
   };
@@ -67,6 +71,10 @@ export function ContextMenu({ familyId }) {
           <div className="context-menu-item danger" onClick={(e) => handleAction('archive', e)}>
             <Archive size={14} />
             <span>Archive</span>
+          </div>
+          <div className="context-menu-item danger" onClick={(e) => handleAction('delete', e)}>
+            <Trash2 size={14} />
+            <span>Delete Family</span>
           </div>
         </div>
       )}

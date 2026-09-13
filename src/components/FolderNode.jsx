@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus, User, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, Heart, Plus } from 'lucide-react';
 import { ContextMenu } from './ContextMenu';
-import { getFamilyMembers } from '../utils/relationshipUtils';
 import { useModals } from './modals/ModalProvider';
 import { useFamily } from '../store/FamilyStore';
 import './FolderNode.css';
@@ -16,14 +15,12 @@ export function FolderNode({ node, level = 0 }) {
 
   if (!node) return null;
 
-  const members = getFamilyMembers(state, node.familyId);
   const hasChildren = node.childrenNodes && node.childrenNodes.length > 0;
-  const hasContent = hasChildren || members.length > 0;
 
   const handleToggle = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    if (hasContent) {
+    if (hasChildren) {
       setExpanded(!expanded);
     }
   };
@@ -81,7 +78,7 @@ export function FolderNode({ node, level = 0 }) {
         onDrop={handleDrop}
       >
         <div className="folder-icon-area" onClick={handleToggle}>
-          {hasContent ? (
+          {hasChildren ? (
             expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
           ) : (
             <span style={{ width: 16, display: 'inline-block' }} />
@@ -130,43 +127,6 @@ export function FolderNode({ node, level = 0 }) {
           >
             <Plus size={12} strokeWidth={3} />
           </div>
-          
-          {/* Render Members (Parents) */}
-          {members.map(member => (
-            <div 
-              key={member.id} 
-              className="folder-node-row member-row" 
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/person/${member.id}/tree`);
-              }}
-            >
-              <div className="folder-icon-area" style={{ marginLeft: '16px', color: member.gender === 'F' ? '#d13438' : '#0078d4' }}>
-                <User size={16} />
-              </div>
-              <div className="folder-content">
-                <span className="folder-name" style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  {member.name} {member.isAlive === false && '(Deceased)'}
-                </span>
-                <span className="badge" style={{ backgroundColor: 'var(--bg-hover)', color: 'var(--text-muted)' }}>Member</span>
-              </div>
-              
-              <div 
-                className="folder-actions" 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (window.confirm(`Are you sure you want to delete ${member.name}?`)) {
-                    dispatch({ type: 'DELETE_PERSON', payload: { id: member.id } });
-                  }
-                }}
-                style={{ opacity: 1, paddingRight: '8px' }}
-              >
-                <div title="Delete Member" style={{ color: '#d13438', cursor: 'pointer', padding: '4px' }}>
-                  <Trash2 size={14} />
-                </div>
-              </div>
-            </div>
-          ))}
 
           {/* Render Children Families */}
           {node.childrenNodes && node.childrenNodes.map((childNode, index) => (

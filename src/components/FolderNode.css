@@ -50,13 +50,8 @@
 }
 
 .folder-actions {
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-
-.folder-node-row:hover .folder-actions,
-.folder-actions:focus-within {
   opacity: 1;
+  transition: opacity 0.15s;
 }
 
 .folder-children {
