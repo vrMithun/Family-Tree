@@ -213,6 +213,22 @@ export const handleFirebaseAction = async (state, action) => {
       break;
     }
 
+    case 'DELETE_FAMILY': {
+      const { id } = action.payload;
+      ops.push({ type: 'delete', collection: collections.FAMILIES, id });
+      
+      // Delete memberships
+      const memberships = (state.familyMemberships || []).filter(m => m.familyId === id);
+      memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id }));
+      
+      // Delete parentChild links where this family is the parent
+      const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === id);
+      pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id }));
+      
+      await executeBatchWrite(ops);
+      break;
+    }
+
     case 'EDIT_FAMILY': {
       const { id, updates } = action.payload;
       ops.push({ type: 'update', collection: collections.FAMILIES, id, data: updates });
