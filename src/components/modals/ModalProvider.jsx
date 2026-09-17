@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { MemberFormModal } from './MemberFormModal';
 import { EditFamilyModal } from './EditFamilyModal';
+import { DeleteFamilyModal } from './DeleteFamilyModal';
 
 const ModalContext = createContext(null);
 
@@ -44,6 +45,15 @@ export function ModalProvider({ children }) {
           isOpen={modalState.isOpen}
           onClose={closeModal}
           familyId={modalState.targetFamilyId}
+        />
+      )}
+      
+      {modalState.type === 'delete-family' && (
+        <DeleteFamilyModal
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          familyId={modalState.targetFamilyId}
+          hasChildren={modalState.hasChildren}
         />
       )}
     </ModalContext.Provider>

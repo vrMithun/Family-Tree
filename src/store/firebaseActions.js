@@ -233,23 +233,46 @@ export const handleFirebaseAction = async (state, action) => {
     case 'DELETE_FAMILY': {
       const { id, deleteSubtree } = action.payload;
       
-      let familiesToDelete = [id];
+      let familiesToDelete = [];
       if (deleteSubtree) {
+        familiesToDelete = [id];
         const descendants = getDescendantFamilyIds(state, id);
         familiesToDelete = [...familiesToDelete, ...descendants];
+        
+        familiesToDelete.forEach(famId => {
+          ops.push({ type: 'delete', collection: collections.FAMILIES, id: famId });
+          
+          // Delete memberships
+          const memberships = (state.familyMemberships || []).filter(m => m.familyId === famId);
+          memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
+          
+          // Delete parentChild links where this family is the parent
+          const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === famId);
+          pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id || `${pc.parentFamilyId}_${pc.childId}` }));
+        });
+      } else {
+        const hasChildren = (state.parentChild || []).some(pc => pc.parentFamilyId === id);
+        
+        if (hasChildren) {
+          // Rename the family to 'Unknown Person' so children aren't completely orphaned in UI
+          ops.push({ type: 'update', collection: collections.FAMILIES, id, data: { displayName: 'Unknown Person' } });
+          
+          // Remove the actual people from this family (their memberships)
+          const memberships = (state.familyMemberships || []).filter(m => m.familyId === id);
+          memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
+        } else {
+          // No children, completely delete the family
+          ops.push({ type: 'delete', collection: collections.FAMILIES, id });
+          
+          // Delete memberships
+          const memberships = (state.familyMemberships || []).filter(m => m.familyId === id);
+          memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
+          
+          // Delete parentChild links where this family is the parent (none, but just to be safe)
+          const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === id);
+          pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id || `${pc.parentFamilyId}_${pc.childId}` }));
+        }
       }
-      
-      familiesToDelete.forEach(famId => {
-        ops.push({ type: 'delete', collection: collections.FAMILIES, id: famId });
-        
-        // Delete memberships
-        const memberships = (state.familyMemberships || []).filter(m => m.familyId === famId);
-        memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
-        
-        // Delete parentChild links where this family is the parent
-        const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === famId);
-        pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id || `${pc.parentFamilyId}_${pc.childId}` }));
-      });
       
       await executeBatchWrite(ops);
       break;
