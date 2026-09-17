@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { executeBatchWrite, collections, savePerson, updatePerson, deletePerson, createProject, deleteProject as dbDeleteProject } from '../firebase/db';
 import { calculateGenerations } from '../utils/generationUtils';
+import { getDescendantFamilyIds } from '../utils/treePathUtils';
 import { emptyProjectTemplate } from '../data/mockData';
 
 // Helper to resolve person for writes
@@ -230,16 +231,25 @@ export const handleFirebaseAction = async (state, action) => {
     }
 
     case 'DELETE_FAMILY': {
-      const { id } = action.payload;
-      ops.push({ type: 'delete', collection: collections.FAMILIES, id });
+      const { id, deleteSubtree } = action.payload;
       
-      // Delete memberships
-      const memberships = (state.familyMemberships || []).filter(m => m.familyId === id);
-      memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id }));
+      let familiesToDelete = [id];
+      if (deleteSubtree) {
+        const descendants = getDescendantFamilyIds(state, id);
+        familiesToDelete = [...familiesToDelete, ...descendants];
+      }
       
-      // Delete parentChild links where this family is the parent
-      const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === id);
-      pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id }));
+      familiesToDelete.forEach(famId => {
+        ops.push({ type: 'delete', collection: collections.FAMILIES, id: famId });
+        
+        // Delete memberships
+        const memberships = (state.familyMemberships || []).filter(m => m.familyId === famId);
+        memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
+        
+        // Delete parentChild links where this family is the parent
+        const pcLinks = (state.parentChild || []).filter(pc => pc.parentFamilyId === famId);
+        pcLinks.forEach(pc => ops.push({ type: 'delete', collection: collections.PARENT_CHILD, id: pc.id || `${pc.parentFamilyId}_${pc.childId}` }));
+      });
       
       await executeBatchWrite(ops);
       break;

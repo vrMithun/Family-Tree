@@ -276,8 +276,9 @@ export function FolderNode({ node, level = 0, globalExpandState, toggleCounter, 
             onClick={(e) => {
               e.stopPropagation();
               e.preventDefault();
-              if (window.confirm('Are you sure you want to delete this entire family branch? This action cannot be undone.')) {
-                dispatch({ type: 'DELETE_FAMILY', payload: { id: node.familyId } });
+              if (window.confirm('Are you sure you want to delete this family node?')) {
+                const deleteSubtree = window.confirm("Do you want to delete the ENTIRE SUBTREE as well?\n\nOK = Delete this family AND all descendants\nCancel = Only delete this family (descendants will be kept as disconnected)");
+                dispatch({ type: 'DELETE_FAMILY', payload: { id: node.familyId, deleteSubtree } });
               }
             }}
           >
