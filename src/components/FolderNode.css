@@ -109,9 +109,71 @@
   /* No special grab cursor unless hovering the row */
 }
 
-.folder-node-row.drag-over {
+.folder-node-row.drag-over:not(.drop-before):not(.drop-after) {
   background-color: var(--bg-hover);
   outline: 2px dashed var(--accent-color);
   outline-offset: -2px;
   border-radius: 4px;
+}
+
+/* Drag handle for sibling reorder */
+.drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  margin-right: 4px;
+  color: var(--text-muted);
+  cursor: grab;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s;
+}
+
+.folder-node-row:hover .drag-handle {
+  opacity: 1;
+}
+
+.drag-handle:hover {
+  color: var(--text-primary);
+  background-color: var(--bg-active);
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Sibling reorder drop indicators */
+.folder-node-row.drop-before {
+  position: relative;
+}
+
+.folder-node-row.drop-before::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-color);
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0, 120, 212, 0.5);
+}
+
+.folder-node-row.drop-after {
+  position: relative;
+}
+
+.folder-node-row.drop-after::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-color);
+  border-radius: 2px;
+  z-index: 10;
+  box-shadow: 0 0 4px rgba(0, 120, 212, 0.5);
 }

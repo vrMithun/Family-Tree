@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, Heart, Plus, Trash2, GripVertical } from 'lucide-react';
 import { useModals } from './modals/ModalProvider';
 import { useFamily } from '../store/FamilyStore';
 import './FolderNode.css';
 
-export function FolderNode({ node, level = 0 }) {
-  const [expanded, setExpanded] = useState(level < 2); // default expand first few levels
+export function FolderNode({ node, level = 0, globalExpandState, toggleCounter, parentFamilyId, siblingIds }) {
+  const [expanded, setExpanded] = useState(level < 2);
   const navigate = useNavigate();
   const [isDragOver, setIsDragOver] = useState(false);
+  const [dropPosition, setDropPosition] = useState(null); // 'before' | 'after' | null
   const { state, dispatch } = useFamily();
   const { openModal } = useModals();
+  const rowRef = useRef(null);
+
+  // React to global expand/collapse commands
+  useEffect(() => {
+    if (toggleCounter === undefined || toggleCounter === 0) return;
+    if (globalExpandState === 'expand-all') {
+      setExpanded(true);
+    } else if (globalExpandState === 'collapse-all') {
+      setExpanded(false);
+    }
+  }, [toggleCounter, globalExpandState]);
 
   if (!node) return null;
 
@@ -31,7 +43,9 @@ export function FolderNode({ node, level = 0 }) {
   };
 
   const handleDragStart = (e) => {
-    e.dataTransfer.setData('text/plain', node.familyId);
+    e.dataTransfer.setData('application/family-id', node.familyId);
+    e.dataTransfer.setData('application/parent-family-id', parentFamilyId || '');
+    e.dataTransfer.setData('application/child-id', node.bioChildId || '');
     e.dataTransfer.effectAllowed = 'move';
   };
 
@@ -39,6 +53,20 @@ export function FolderNode({ node, level = 0 }) {
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
+
+    const draggedParent = e.dataTransfer.types.includes('application/parent-family-id');
+    
+    // Determine if this is a sibling reorder (show before/after indicator)
+    if (rowRef.current && parentFamilyId) {
+      const rect = rowRef.current.getBoundingClientRect();
+      const midY = rect.top + rect.height / 2;
+      if (e.clientY < midY) {
+        setDropPosition('before');
+      } else {
+        setDropPosition('after');
+      }
+    }
+    
     if (!isDragOver) setIsDragOver(true);
   };
 
@@ -46,15 +74,66 @@ export function FolderNode({ node, level = 0 }) {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+    setDropPosition(null);
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
+    setDropPosition(null);
     
-    const draggedFamilyId = e.dataTransfer.getData('text/plain');
-    if (draggedFamilyId && draggedFamilyId !== node.familyId) {
+    const draggedFamilyId = e.dataTransfer.getData('application/family-id');
+    const draggedParentFamilyId = e.dataTransfer.getData('application/parent-family-id');
+    
+    if (!draggedFamilyId || draggedFamilyId === node.familyId) return;
+    
+    // Check if this is a sibling reorder (same parent)
+    if (parentFamilyId && draggedParentFamilyId === parentFamilyId && siblingIds) {
+      // Reorder siblings
+      const currentOrder = [...siblingIds];
+      
+      // Find the child IDs for dragged and target
+      // We need to find which childId corresponds to which familyId
+      const draggedIndex = currentOrder.findIndex(id => {
+        const fams = (state.familyMemberships || [])
+          .filter(m => m.personId === id && m.role === 'parent')
+          .map(m => m.familyId);
+        return fams.includes(draggedFamilyId);
+      });
+      
+      const targetIndex = currentOrder.findIndex(id => {
+        const fams = (state.familyMemberships || [])
+          .filter(m => m.personId === id && m.role === 'parent')
+          .map(m => m.familyId);
+        return fams.includes(node.familyId);
+      });
+      
+      if (draggedIndex === -1 || targetIndex === -1) return;
+      
+      // Remove dragged and insert at the target position
+      const [movedId] = currentOrder.splice(draggedIndex, 1);
+      
+      // Determine position based on drop indicator
+      const rect = rowRef.current?.getBoundingClientRect();
+      const midY = rect ? rect.top + rect.height / 2 : 0;
+      const insertBefore = e.clientY < midY;
+      
+      let insertIndex = currentOrder.indexOf(currentOrder[targetIndex > draggedIndex ? targetIndex - 1 : targetIndex]);
+      if (insertIndex === -1) insertIndex = currentOrder.length;
+      if (!insertBefore) insertIndex += 1;
+      
+      currentOrder.splice(insertIndex, 0, movedId);
+      
+      dispatch({
+        type: 'REORDER_SIBLINGS',
+        payload: {
+          parentFamilyId,
+          orderedChildIds: currentOrder
+        }
+      });
+    } else {
+      // Move subtree to new parent
       dispatch({
         type: 'MOVE_SUBTREE',
         payload: {
@@ -65,10 +144,28 @@ export function FolderNode({ node, level = 0 }) {
     }
   };
 
+  // Compute children's childIds for sibling context
+  const childSiblingIds = hasChildren
+    ? node.childrenNodes.map(cn => {
+        // The bioChildId was the childId linked to this family via parentChild
+        // We need to find the personId for each child node
+        const members = (state.familyMemberships || [])
+          .filter(m => m.familyId === cn.familyId && m.role === 'parent')
+          .map(m => m.personId);
+        // Find which one is a child of node.familyId
+        const childId = (state.parentChild || [])
+          .find(pc => pc.parentFamilyId === node.familyId && members.includes(pc.childId));
+        return childId?.childId || members[0];
+      }).filter(Boolean)
+    : [];
+
+  const dropClass = dropPosition === 'before' ? 'drop-before' : dropPosition === 'after' ? 'drop-after' : '';
+
   return (
     <div className="folder-node-wrapper">
       <div 
-        className={`folder-node-row ${isDragOver ? 'drag-over' : ''}`}
+        ref={rowRef}
+        className={`folder-node-row ${isDragOver ? 'drag-over' : ''} ${dropClass}`}
         onClick={handleClick}
         draggable={true}
         onDragStart={handleDragStart}
@@ -76,6 +173,11 @@ export function FolderNode({ node, level = 0 }) {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
+        {parentFamilyId && siblingIds && siblingIds.length > 1 && (
+          <div className="drag-handle" title="Drag to reorder">
+            <GripVertical size={14} />
+          </div>
+        )}
         <div className="folder-icon-area" onClick={handleToggle}>
           {hasChildren ? (
             expanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
@@ -141,7 +243,15 @@ export function FolderNode({ node, level = 0 }) {
 
           {/* Render Children Families */}
           {node.childrenNodes && node.childrenNodes.map((childNode, index) => (
-            <FolderNode key={`${childNode.familyId}-${index}`} node={childNode} level={level + 1} />
+            <FolderNode 
+              key={`${childNode.familyId}-${index}`} 
+              node={childNode} 
+              level={level + 1} 
+              globalExpandState={globalExpandState}
+              toggleCounter={toggleCounter}
+              parentFamilyId={node.familyId}
+              siblingIds={childSiblingIds}
+            />
           ))}
         </div>
       )}

@@ -54,9 +54,15 @@ export const handleFirebaseAction = async (state, action) => {
         ops.push({ type: 'set', collection: collections.PEOPLE, id: resolved.id, data: resolved.person });
       }
       
+      // Calculate next order for this parent's children
+      const existingChildrenOrder = (state.parentChild || [])
+        .filter(pc => pc.parentFamilyId === parentFamilyId)
+        .map(pc => pc.order ?? 0);
+      const nextOrder = existingChildrenOrder.length > 0 ? Math.max(...existingChildrenOrder) + 1 : 0;
+      
       const newFamily = { id: uuidv4(), displayName: resolved.isNew ? resolved.person.name : state.people[resolved.id].name, projectId };
       const membership = { id: uuidv4(), familyId: newFamily.id, personId: resolved.id, role: 'parent', projectId };
-      const pcLink = { id: uuidv4(), parentFamilyId, childId: resolved.id, projectId };
+      const pcLink = { id: uuidv4(), parentFamilyId, childId: resolved.id, projectId, order: nextOrder };
       
       ops.push({ type: 'set', collection: collections.FAMILIES, id: newFamily.id, data: newFamily });
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
@@ -82,7 +88,7 @@ export const handleFirebaseAction = async (state, action) => {
       const targetPersonId = coreMembers[0];
       
       const membership = { id: uuidv4(), familyId: newFamily.id, personId: resolved.id, role: 'parent', projectId };
-      const pcLink = { id: uuidv4(), parentFamilyId: newFamily.id, childId: targetPersonId, projectId };
+      const pcLink = { id: uuidv4(), parentFamilyId: newFamily.id, childId: targetPersonId, projectId, order: 0 };
       
       ops.push({ type: 'set', collection: collections.FAMILIES, id: newFamily.id, data: newFamily });
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
@@ -107,7 +113,7 @@ export const handleFirebaseAction = async (state, action) => {
       if (!actualParentFamilyId) {
         actualParentFamilyId = uuidv4();
         const unknownFamily = { id: actualParentFamilyId, displayName: "Unknown Parents", projectId };
-        const unknownPcLink = { id: uuidv4(), parentFamilyId: actualParentFamilyId, childId: siblingPersonId, projectId };
+        const unknownPcLink = { id: uuidv4(), parentFamilyId: actualParentFamilyId, childId: siblingPersonId, projectId, order: 0 };
         
         ops.push({ type: 'set', collection: collections.FAMILIES, id: unknownFamily.id, data: unknownFamily });
         ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: unknownPcLink.id, data: unknownPcLink });
@@ -118,9 +124,15 @@ export const handleFirebaseAction = async (state, action) => {
         ops.push({ type: 'set', collection: collections.PEOPLE, id: resolved.id, data: resolved.person });
       }
       
+      // Calculate next order for siblings under this parent
+      const existingSiblingOrder = (state.parentChild || [])
+        .filter(pc => pc.parentFamilyId === actualParentFamilyId)
+        .map(pc => pc.order ?? 0);
+      const nextSiblingOrder = existingSiblingOrder.length > 0 ? Math.max(...existingSiblingOrder) + 1 : 0;
+      
       const newFamily = { id: uuidv4(), displayName: resolved.isNew ? resolved.person.name : state.people[resolved.id].name, projectId };
       const membership = { id: uuidv4(), familyId: newFamily.id, personId: resolved.id, role: 'parent', projectId };
-      const pcLink = { id: uuidv4(), parentFamilyId: actualParentFamilyId, childId: resolved.id, projectId };
+      const pcLink = { id: uuidv4(), parentFamilyId: actualParentFamilyId, childId: resolved.id, projectId, order: nextSiblingOrder };
       
       ops.push({ type: 'set', collection: collections.FAMILIES, id: newFamily.id, data: newFamily });
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
@@ -264,6 +276,25 @@ export const handleFirebaseAction = async (state, action) => {
         const pcLink = { id: uuidv4(), parentFamilyId: newParentFamilyId, childId: coreMembers[0], projectId };
         ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: pcLink.id, data: pcLink });
       }
+      
+      await executeBatchWrite(ops);
+      break;
+    }
+
+    case 'REORDER_SIBLINGS': {
+      const { parentFamilyId, orderedChildIds } = action.payload;
+      
+      // Find all parentChild records for this parent family
+      const pcRecords = (state.parentChild || [])
+        .filter(pc => pc.parentFamilyId === parentFamilyId);
+      
+      // Update order for each child based on position in orderedChildIds
+      orderedChildIds.forEach((childId, index) => {
+        const record = pcRecords.find(pc => pc.childId === childId);
+        if (record && record.id) {
+          ops.push({ type: 'update', collection: collections.PARENT_CHILD, id: record.id, data: { order: index } });
+        }
+      });
       
       await executeBatchWrite(ops);
       break;

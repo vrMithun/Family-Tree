@@ -21,9 +21,17 @@ export function buildFamilyForest(data, generations, specificRootFamilyId = null
 
     const childIds = getFamilyChildrenIds(data, familyId);
     
+    // Sort children by their order field from parentChild records
+    const childPcRecords = (data.parentChild || []).filter(pc => pc.parentFamilyId === familyId);
+    const sortedChildIds = [...childIds].sort((a, b) => {
+      const aRecord = childPcRecords.find(pc => pc.childId === a);
+      const bRecord = childPcRecords.find(pc => pc.childId === b);
+      return (aRecord?.order ?? 0) - (bRecord?.order ?? 0);
+    });
+    
     const childFamilyNodes = [];
     
-    childIds.forEach(childId => {
+    sortedChildIds.forEach(childId => {
       const familiesAsParent = getFamiliesForPerson(data, childId);
       familiesAsParent.forEach(cfId => {
         const childNode = buildNode(cfId, childId);
