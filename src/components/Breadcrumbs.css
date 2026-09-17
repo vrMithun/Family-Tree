@@ -24,3 +24,15 @@
 .breadcrumb-separator {
   color: var(--text-muted);
 }
+
+.history-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.history-actions .btn-icon:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

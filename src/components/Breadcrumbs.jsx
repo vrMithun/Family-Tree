@@ -1,12 +1,12 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Undo2, Redo2 } from 'lucide-react';
 import { useFamily } from '../store/FamilyStore';
 import { getPathToRoot } from '../utils/treePathUtils';
 import './Breadcrumbs.css';
 
 export function Breadcrumbs() {
-  const { state } = useFamily();
+  const { state, undo, redo, canUndo, canRedo } = useFamily();
   const location = useLocation();
   
   // Parse current route
@@ -75,6 +75,25 @@ export function Breadcrumbs() {
           </React.Fragment>
         );
       })}
+      
+      <div className="history-actions">
+        <button 
+          className="btn-icon" 
+          disabled={!canUndo} 
+          onClick={undo}
+          title="Undo"
+        >
+          <Undo2 size={16} />
+        </button>
+        <button 
+          className="btn-icon" 
+          disabled={!canRedo} 
+          onClick={redo}
+          title="Redo"
+        >
+          <Redo2 size={16} />
+        </button>
+      </div>
     </nav>
   );
 }

@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { executeBatchWrite, collections, savePerson, updatePerson, deletePerson, createProject, deleteProject as dbDeleteProject } from '../firebase/db';
+import { collections, savePerson, updatePerson, deletePerson, createProject, deleteProject as dbDeleteProject } from '../firebase/db';
 import { calculateGenerations } from '../utils/generationUtils';
 import { getDescendantFamilyIds } from '../utils/treePathUtils';
 import { emptyProjectTemplate } from '../data/mockData';
@@ -44,7 +44,7 @@ export const handleFirebaseAction = async (state, action) => {
       ops.push({ type: 'set', collection: collections.FAMILIES, id: newFamily.id, data: newFamily });
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -69,7 +69,7 @@ export const handleFirebaseAction = async (state, action) => {
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
       ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: pcLink.id, data: pcLink });
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -95,7 +95,7 @@ export const handleFirebaseAction = async (state, action) => {
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
       ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: pcLink.id, data: pcLink });
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -139,7 +139,7 @@ export const handleFirebaseAction = async (state, action) => {
       ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: membership.id, data: membership });
       ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: pcLink.id, data: pcLink });
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -173,13 +173,15 @@ export const handleFirebaseAction = async (state, action) => {
         ops.push({ type: 'update', collection: collections.FAMILIES, id: famId, data: { displayName: `${firstNameA} & ${firstNameB}` } });
       }
       
-      await executeBatchWrite(ops);
+
       break;
     }
-
     case 'EDIT_PERSON': {
       const { id, updates } = action.payload;
-      await updatePerson(id, updates);
+      // EDIT_PERSON handles its own update directly via updatePerson,
+      // but for undo/redo we need it in ops.
+      // So we change it to an op:
+      ops.push({ type: 'update', collection: collections.PEOPLE, id, data: updates });
       break;
     }
 
@@ -226,7 +228,7 @@ export const handleFirebaseAction = async (state, action) => {
         // We will seed them with IDs.
       }
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -257,9 +259,30 @@ export const handleFirebaseAction = async (state, action) => {
           // Rename the family to 'Unknown Person' so children aren't completely orphaned in UI
           ops.push({ type: 'update', collection: collections.FAMILIES, id, data: { displayName: 'Unknown Person' } });
           
+          // Generate a proxy person
+          const proxyPersonId = uuidv4();
+          ops.push({ 
+            type: 'set', 
+            collection: collections.PEOPLE, 
+            id: proxyPersonId, 
+            data: { id: proxyPersonId, name: 'Unknown Person', isProxy: true, birthDate: '', deathDate: '', birthPlace: '', notes: '' } 
+          });
+          
+          // Add proxy person membership
+          const proxyMembership = { id: uuidv4(), familyId: id, personId: proxyPersonId, role: 'parent', projectId };
+          ops.push({ type: 'set', collection: collections.MEMBERSHIPS, id: proxyMembership.id, data: proxyMembership });
+          
+          // Update the parent-child link pointing to this family to use the proxy person
+          const oldMemberships = (state.familyMemberships || []).filter(m => m.familyId === id);
+          const oldPersonIds = oldMemberships.map(m => m.personId);
+          
+          const incomingPcLink = (state.parentChild || []).find(pc => oldPersonIds.includes(pc.childId));
+          if (incomingPcLink) {
+            ops.push({ type: 'update', collection: collections.PARENT_CHILD, id: incomingPcLink.id, data: { childId: proxyPersonId } });
+          }
+
           // Remove the actual people from this family (their memberships)
-          const memberships = (state.familyMemberships || []).filter(m => m.familyId === id);
-          memberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
+          oldMemberships.forEach(m => ops.push({ type: 'delete', collection: collections.MEMBERSHIPS, id: m.id || `${m.familyId}_${m.personId}_${m.role}` }));
         } else {
           // No children, completely delete the family
           ops.push({ type: 'delete', collection: collections.FAMILIES, id });
@@ -274,14 +297,14 @@ export const handleFirebaseAction = async (state, action) => {
         }
       }
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
     case 'EDIT_FAMILY': {
       const { id, updates } = action.payload;
       ops.push({ type: 'update', collection: collections.FAMILIES, id, data: updates });
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -310,7 +333,7 @@ export const handleFirebaseAction = async (state, action) => {
         ops.push({ type: 'set', collection: collections.PARENT_CHILD, id: pcLink.id, data: pcLink });
       }
       
-      await executeBatchWrite(ops);
+
       break;
     }
 
@@ -329,7 +352,7 @@ export const handleFirebaseAction = async (state, action) => {
         }
       });
       
-      await executeBatchWrite(ops);
+
       break;
     }
   }
