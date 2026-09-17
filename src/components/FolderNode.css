@@ -50,8 +50,48 @@
 }
 
 .folder-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   opacity: 1;
   transition: opacity 0.15s;
+}
+
+.reorder-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.reorder-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 18px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.15s;
+}
+
+.reorder-btn:hover:not(.disabled) {
+  background: var(--accent-light);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.reorder-btn:active:not(.disabled) {
+  background: var(--accent-color);
+  color: white;
+}
+
+.reorder-btn.disabled {
+  opacity: 0.3;
+  cursor: default;
 }
 
 .folder-children {

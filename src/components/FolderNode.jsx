@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, ChevronDown, Folder, Heart, Plus, Trash2, GripVertical } from 'lucide-react';
+import { ChevronRight, ChevronDown, ChevronUp, Folder, Heart, Plus, Trash2, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import { useModals } from './modals/ModalProvider';
 import { useFamily } from '../store/FamilyStore';
 import './FolderNode.css';
@@ -161,6 +161,44 @@ export function FolderNode({ node, level = 0, globalExpandState, toggleCounter, 
 
   const dropClass = dropPosition === 'before' ? 'drop-before' : dropPosition === 'after' ? 'drop-after' : '';
 
+  // Find current node's index among siblings for move up/down
+  const hasSiblings = parentFamilyId && siblingIds && siblingIds.length > 1;
+  let myIndexInSiblings = -1;
+  let myChildId = null;
+  if (hasSiblings) {
+    // Find which childId corresponds to this node's familyId
+    for (let i = 0; i < siblingIds.length; i++) {
+      const fams = (state.familyMemberships || [])
+        .filter(m => m.personId === siblingIds[i] && m.role === 'parent')
+        .map(m => m.familyId);
+      if (fams.includes(node.familyId)) {
+        myIndexInSiblings = i;
+        myChildId = siblingIds[i];
+        break;
+      }
+    }
+  }
+  const canMoveUp = myIndexInSiblings > 0;
+  const canMoveDown = myIndexInSiblings >= 0 && myIndexInSiblings < (siblingIds?.length || 0) - 1;
+
+  const handleMoveUp = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!canMoveUp) return;
+    const newOrder = [...siblingIds];
+    [newOrder[myIndexInSiblings - 1], newOrder[myIndexInSiblings]] = [newOrder[myIndexInSiblings], newOrder[myIndexInSiblings - 1]];
+    dispatch({ type: 'REORDER_SIBLINGS', payload: { parentFamilyId, orderedChildIds: newOrder } });
+  };
+
+  const handleMoveDown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!canMoveDown) return;
+    const newOrder = [...siblingIds];
+    [newOrder[myIndexInSiblings], newOrder[myIndexInSiblings + 1]] = [newOrder[myIndexInSiblings + 1], newOrder[myIndexInSiblings]];
+    dispatch({ type: 'REORDER_SIBLINGS', payload: { parentFamilyId, orderedChildIds: newOrder } });
+  };
+
   return (
     <div className="folder-node-wrapper">
       <div 
@@ -212,6 +250,26 @@ export function FolderNode({ node, level = 0, globalExpandState, toggleCounter, 
         </div>
         
         <div className="folder-actions" onClick={e => e.stopPropagation()}>
+          {hasSiblings && (
+            <div className="reorder-buttons">
+              <button 
+                className={`reorder-btn ${!canMoveUp ? 'disabled' : ''}`}
+                title="Move Up"
+                disabled={!canMoveUp}
+                onClick={handleMoveUp}
+              >
+                <ArrowUp size={14} />
+              </button>
+              <button 
+                className={`reorder-btn ${!canMoveDown ? 'disabled' : ''}`}
+                title="Move Down"
+                disabled={!canMoveDown}
+                onClick={handleMoveDown}
+              >
+                <ArrowDown size={14} />
+              </button>
+            </div>
+          )}
           <div 
             className="delete-btn action-btn danger" 
             title="Delete Family Branch"
