@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFamily } from '../../store/FamilyStore';
 import { X, Trash2 } from 'lucide-react';
-import './Modal.css';
+import '../Modal.css';
 
 export function DeleteFamilyModal({ isOpen, onClose, familyId, hasChildren }) {
   const { dispatch } = useFamily();
